@@ -1,18 +1,18 @@
-
-#include "graphics.h"
+#include "RenderWindow.h"
 
 int main()
 {
-    initwindow(800, 600, "Test Graphics");
+    RenderWindow window = RenderWindow(1920, 1080);
 
-    setcolor(WHITE);
-    circle(400, 300, 100);
+    while (true)
+    {
+        window.update();
 
-    setcolor(RED);
-    rectangle(100, 100, 300, 200);
+        if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
 
-    getch();
+        delay(16);
+    }
+
     closegraph();
-
     return 0;
 }
