@@ -29,8 +29,6 @@ void RenderWindow::init(int w, int h)
 
     lastWidth = getmaxx();
     lastHeight = getmaxy();
-
-    render();
 }
 
 void RenderWindow::drawMenu()
@@ -50,29 +48,52 @@ void RenderWindow::drawMenu()
 	line(0, MENU_HEIGHT, getmaxx(), MENU_HEIGHT);
 }
 
-void RenderWindow::drawEditor()
+void RenderWindow::drawEditor(const TextEditor& editor)
 {
-	setfillstyle(SOLID_FILL, WHITE);
-	bar(0, MENU_HEIGHT + 1, getmaxx(), getmaxy());
+    const TextDocument& doc = editor.getDocument();
+
+    const int PADDING_X = 10;
+    const int PADDING_Y = 10;
+    const int LINE_HEIGHT = 20;
+
+    setfillstyle(SOLID_FILL, WHITE);
+    bar(0, MENU_HEIGHT + 1, getmaxx(), getmaxy());
+
+    setbkcolor(WHITE);
+    setcolor(BLACK);
+    settextstyle(DEFAULT_FONT, HORIZ_DIR, 1);
+
+    for (int i = 0; i < doc.getLines(); i++)
+    {
+        int x = PADDING_X;
+        int y = MENU_HEIGHT + PADDING_Y + i * LINE_HEIGHT;
+
+        if (y + LINE_HEIGHT > getmaxy())
+            break;
+
+        std::string line = doc.getLine(i);
+
+        outtextxy(x, y, const_cast<char*>(line.c_str()));
+    }
 }
 
-void RenderWindow::render()
+void RenderWindow::render(const TextEditor& editor)
 {
 	setbkcolor(WHITE);
 	cleardevice();
 
-	drawEditor();
+	drawEditor(editor);
 	drawMenu();
 }
 
-void RenderWindow::update()
+void RenderWindow::update(const TextEditor& editor)
 {
 	int w = getmaxx();
 	int h = getmaxy();
 
 	if (lastWidth != w || lastHeight != h)
 	{
-		render();
+		render(editor);
 
 		lastWidth = w;
 		lastHeight = h;
