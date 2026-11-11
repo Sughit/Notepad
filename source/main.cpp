@@ -1,5 +1,6 @@
 #include "RenderWindow.h"
 #include "TextEditor.h"
+#include "InputManager.h"
 
 #include <iostream>
 
@@ -7,21 +8,13 @@ int main()
 {
     RenderWindow window(1920, 1080);
     TextEditor editor;
-
-    std::string text = "Hello world";
-
-    for (char c : text) editor.insertChar(c);
-    editor.enter();
-
-    text = "This is my notepad!";
-
-    for (char c : text) editor.insertChar(c);
-    editor.enter();
+    InputManager input;
 
     window.render(editor);
 
     while (true)
     {
+        input.update(editor);
         window.update(editor);
 
         if (GetAsyncKeyState(VK_ESCAPE) & 1) break;

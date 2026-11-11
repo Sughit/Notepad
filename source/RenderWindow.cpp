@@ -77,25 +77,68 @@ void RenderWindow::drawEditor(const TextEditor& editor)
     }
 }
 
+void RenderWindow::drawCursor(const TextEditor& editor)
+{
+    const TextCursor& cursor = editor.getCursor();
+    const TextDocument& doc = editor.getDocument();
+
+    const int PADDING_X = 10;
+    const int PADDING_Y = 10;
+    const int LINE_HEIGHT = 20;
+
+    std::string beforeCursor =
+        doc.getLine(cursor.getRow()).substr(0, cursor.getCol());
+
+    int x = PADDING_X +
+        textwidth(const_cast<char*>(beforeCursor.c_str()));
+
+    int y = MENU_HEIGHT + PADDING_Y +
+        cursor.getRow() * LINE_HEIGHT;
+
+    setcolor(BLACK);
+    line(x, y, x, y + textheight((char*)"A"));
+}
+
 void RenderWindow::render(const TextEditor& editor)
 {
 	setbkcolor(WHITE);
 	cleardevice();
 
 	drawEditor(editor);
+    drawCursor(editor);
 	drawMenu();
 }
 
+
 void RenderWindow::update(const TextEditor& editor)
 {
-	int w = getmaxx();
-	int h = getmaxy();
+    int w = getmaxx();
+    int h = getmaxy();
 
-	if (lastWidth != w || lastHeight != h)
-	{
-		render(editor);
+    const TextDocument& doc = editor.getDocument();
+    const TextCursor& cursor = editor.getCursor();
 
-		lastWidth = w;
-		lastHeight = h;
-	}
+    bool dirty = false;
+
+    if (w != lastWidth || h != lastHeight) { dirty = true; }
+    if (cursor.getRow() != lastRow || cursor.getCol() != lastCol) { dirty = true; }
+
+    std::vector<std::string> currentLines;
+    for (int i = 0; i < doc.getLines(); i++)
+    {
+        currentLines.push_back(doc.getLine(i));
+    }
+
+    if (currentLines != lastLines) { dirty = true; }
+    if (!dirty) { return; }
+
+    render(editor);
+
+    lastWidth = w;
+    lastHeight = h;
+
+    lastRow = cursor.getRow();
+    lastCol = cursor.getCol();
+
+    lastLines = std::move(currentLines);
 }
