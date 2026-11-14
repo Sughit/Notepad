@@ -2,7 +2,7 @@
 
 void TextDocument::insertChar(int row, int col, char c)
 {
-	lines.at(row).insert(col, 1, c);
+	m_lines.at(row).insert(col, 1, c);
 }
 
 void TextDocument::deleteChar(int row, int col)
@@ -10,49 +10,49 @@ void TextDocument::deleteChar(int row, int col)
 	if (row < 0 || row >= getLines()) return;
 	if (col < 0 || col >= getLineLength(row)) return;
 
-	lines.at(row).erase(col, 1);
+	m_lines.at(row).erase(col, 1);
 }
 
 void TextDocument::insertLine(int row, int col)
 {
-	std::string remaining = lines.at(row).substr(col);
+	std::string remaining = m_lines.at(row).substr(col);
 
-	lines.at(row).erase(col);
-	lines.insert(lines.begin() + row + 1, remaining);
+	m_lines.at(row).erase(col);
+	m_lines.insert(m_lines.begin() + row + 1, remaining);
 }
 
 void TextDocument::appendLine()
 {
-	if (lines.empty()) { lines.push_back(""); return; }
+	if (m_lines.empty()) { m_lines.push_back(""); return; }
 
-	lines.push_back("");
+	m_lines.push_back("");
 }
 
 void TextDocument::mergeLines(int row)
 {
-	if (row <= 0 || row >= lines.size()) return;
+	if (row <= 0 || row >= m_lines.size()) return;
 	
-	lines.at(row - 1) += lines.at(row);
-	lines.erase(lines.begin() + row);
+	m_lines.at(row - 1) += m_lines.at(row);
+	m_lines.erase(m_lines.begin() + row);
 }
 
 std::string TextDocument::getLine(int row) const
 {
-	return lines.at(row);
+	return m_lines.at(row);
 }
 
 int TextDocument::getLines() const
 {
-	return lines.size();
+	return m_lines.size();
 }
 
 int TextDocument::getLineLength(int row) const
 {
-	return lines.at(row).size();
+	return m_lines.at(row).size();
 }
 
 void TextDocument::clear()
 {
-	lines.clear();
-	lines.push_back("");
+	m_lines.clear();
+	m_lines.push_back("");
 }

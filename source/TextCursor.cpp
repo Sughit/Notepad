@@ -2,16 +2,16 @@
 
 int TextCursor::getRow() const
 {
-	return row;
+	return m_row;
 }
 
 int TextCursor::getCol() const
 {
-	return col;
+	return m_col;
 }
 
 void TextCursor::setPosition(int r, int c)
 {
-	this->row = r;
-	this->col = c;
+	this->m_row = r;
+	this->m_col = c;
 }

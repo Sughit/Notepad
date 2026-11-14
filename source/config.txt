@@ -1,0 +1,16 @@
+# Language NUME_LIMBA
+# Urmata de cuvintele corespunzatoare butoanelor
+
+# 1. Butoane din meniul principal
+
+Language Română
+Fișier Editare Afișare
+
+Language English
+File Edit View
+
+Language Français 
+Fichier Édition Affichage
+
+Language Deutsch
+Datei Bearbeiten Ansicht

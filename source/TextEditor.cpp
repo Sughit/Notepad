@@ -3,132 +3,132 @@
 
 const TextDocument& TextEditor::getDocument() const
 {
-	return doc;
+	return m_doc;
 }
 
 const TextCursor& TextEditor::getCursor() const
 {
-	return cursor;
+	return m_cursor;
 }
 
 void TextEditor::insertChar(char c)
 {
-	int row = cursor.getRow();
-	int col = cursor.getCol();
+	int row = m_cursor.getRow();
+	int col = m_cursor.getCol();
 
-	doc.insertChar(row, col, c);
-	cursor.setPosition(row, col + 1);
+	m_doc.insertChar(row, col, c);
+	m_cursor.setPosition(row, col + 1);
 }
 
 void TextEditor::backspace()
 {
-	int row = cursor.getRow();
-	int col = cursor.getCol();
+	int row = m_cursor.getRow();
+	int col = m_cursor.getCol();
 
 	if (col > 0)
 	{
-		doc.deleteChar(row, col - 1);
-		cursor.setPosition(row, col - 1);
+		m_doc.deleteChar(row, col - 1);
+		m_cursor.setPosition(row, col - 1);
 	}
 	else if (row > 0)
 	{
-		int newCol = doc.getLineLength(row - 1);
+		int newCol = m_doc.getLineLength(row - 1);
 
-		doc.mergeLines(row);
-		cursor.setPosition(row - 1, newCol);
+		m_doc.mergeLines(row);
+		m_cursor.setPosition(row - 1, newCol);
 	}
 }
 
 void TextEditor::deleteChar()
 {
-	int row = cursor.getRow();
-	int col = cursor.getCol();
+	int row = m_cursor.getRow();
+	int col = m_cursor.getCol();
 
-	if (col < doc.getLineLength(row))
+	if (col < m_doc.getLineLength(row))
 	{
-		doc.deleteChar(row, col);
+		m_doc.deleteChar(row, col);
 	}
-	else if (row < doc.getLines() - 1)
+	else if (row < m_doc.getLines() - 1)
 	{
-		doc.mergeLines(row + 1);
+		m_doc.mergeLines(row + 1);
 	}
 }
 
 void TextEditor::enter()
 {
-	int row = cursor.getRow();
-	int col = cursor.getCol();
+	int row = m_cursor.getRow();
+	int col = m_cursor.getCol();
 
-	doc.insertLine(row, col);
-	cursor.setPosition(row + 1, 0);
+	m_doc.insertLine(row, col);
+	m_cursor.setPosition(row + 1, 0);
 }
 
 void TextEditor::clear()
 {
-	doc.clear();
-	cursor.setPosition(0, 0);
+	m_doc.clear();
+	m_cursor.setPosition(0, 0);
 }
 
 void TextEditor::moveLeft()
 {
-	int row = cursor.getRow();
-	int col = cursor.getCol();
+	int row = m_cursor.getRow();
+	int col = m_cursor.getCol();
 
 	if (col > 0)
 	{
-		cursor.setPosition(row, col - 1);
+		m_cursor.setPosition(row, col - 1);
 	}
 	else if (row > 0)
 	{
-		cursor.setPosition(row - 1, doc.getLineLength(row - 1));
+		m_cursor.setPosition(row - 1, m_doc.getLineLength(row - 1));
 	}
 }
 
 void TextEditor::moveRight()
 {
-	int row = cursor.getRow();
-	int col = cursor.getCol();
+	int row = m_cursor.getRow();
+	int col = m_cursor.getCol();
 
-	if (col < doc.getLineLength(row))
+	if (col < m_doc.getLineLength(row))
 	{
-		cursor.setPosition(row, col + 1);
+		m_cursor.setPosition(row, col + 1);
 	}
-	else if (row < doc.getLines() - 1)
+	else if (row < m_doc.getLines() - 1)
 	{
-		cursor.setPosition(row + 1, 0);
+		m_cursor.setPosition(row + 1, 0);
 	}
 }
 
 void TextEditor::moveUp()
 {
-	int row = cursor.getRow();
-	int col = cursor.getCol();
+	int row = m_cursor.getRow();
+	int col = m_cursor.getCol();
 
 	if (row <= 0) return;
 
-	int newCol = std::min(col, doc.getLineLength(row - 1));
-	cursor.setPosition(row - 1, newCol);
+	int newCol = std::min(col, m_doc.getLineLength(row - 1));
+	m_cursor.setPosition(row - 1, newCol);
 }
 
 void TextEditor::moveDown()
 {
-	int row = cursor.getRow();
-	int col = cursor.getCol();
+	int row = m_cursor.getRow();
+	int col = m_cursor.getCol();
 
-	if (row >= doc.getLines() - 1) return;
+	if (row >= m_doc.getLines() - 1) return;
 
-	int newCol = std::min(col, doc.getLineLength(row + 1));
-	cursor.setPosition(row + 1, newCol);
+	int newCol = std::min(col, m_doc.getLineLength(row + 1));
+	m_cursor.setPosition(row + 1, newCol);
 }
 
 void TextEditor::moveHome()
 {
-	cursor.setPosition(cursor.getRow(), 0);
+	m_cursor.setPosition(m_cursor.getRow(), 0);
 }
 
 void TextEditor::moveEnd()
 {
-	int row = cursor.getRow();
+	int row = m_cursor.getRow();
 
-	cursor.setPosition(row, doc.getLineLength(row));
+	m_cursor.setPosition(row, m_doc.getLineLength(row));
 }

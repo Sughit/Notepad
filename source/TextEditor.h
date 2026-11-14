@@ -6,8 +6,8 @@
 class TextEditor
 {
 private:
-	TextDocument doc;
-	TextCursor cursor;
+	TextDocument m_doc;
+	TextCursor m_cursor;
 
 public:
 	const TextDocument& getDocument() const;

@@ -11,13 +11,13 @@ const int MENU_HEIGHT = 30;
 class RenderWindow
 {
 private:
-	int lastWidth = -1;
-	int lastHeight = -1;
+	int m_lastWidth = -1;
+	int m_lastHeight = -1;
 
-	int lastRow = -1;
-	int lastCol = -1;
+	int m_lastRow = -1;
+	int m_lastCol = -1;
 
-	std::vector<std::string> lastLines;
+	std::vector<std::string> m_lastLines;
 
 	void init(int w, int h);
 

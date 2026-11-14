@@ -3,8 +3,8 @@
 class TextCursor
 {
 private:
-	int row = 0;
-	int col = 0;
+	int m_row = 0;
+	int m_col = 0;
 
 public:
 	int getRow() const;

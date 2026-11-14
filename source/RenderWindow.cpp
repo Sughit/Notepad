@@ -27,8 +27,8 @@ void RenderWindow::init(int w, int h)
         SWP_FRAMECHANGED
     );
 
-    lastWidth = getmaxx();
-    lastHeight = getmaxy();
+    m_lastWidth = getmaxx();
+    m_lastHeight = getmaxy();
 }
 
 void RenderWindow::drawMenu()
@@ -68,8 +68,7 @@ void RenderWindow::drawEditor(const TextEditor& editor)
         int x = PADDING_X;
         int y = MENU_HEIGHT + PADDING_Y + i * LINE_HEIGHT;
 
-        if (y + LINE_HEIGHT > getmaxy())
-            break;
+        if (y + LINE_HEIGHT > getmaxy()) { break; }
 
         std::string line = doc.getLine(i);
 
@@ -86,14 +85,11 @@ void RenderWindow::drawCursor(const TextEditor& editor)
     const int PADDING_Y = 10;
     const int LINE_HEIGHT = 20;
 
-    std::string beforeCursor =
-        doc.getLine(cursor.getRow()).substr(0, cursor.getCol());
+    std::string beforeCursor = doc.getLine(cursor.getRow()).substr(0, cursor.getCol());
 
-    int x = PADDING_X +
-        textwidth(const_cast<char*>(beforeCursor.c_str()));
+    int x = PADDING_X + textwidth(const_cast<char*>(beforeCursor.c_str()));
 
-    int y = MENU_HEIGHT + PADDING_Y +
-        cursor.getRow() * LINE_HEIGHT;
+    int y = MENU_HEIGHT + PADDING_Y + cursor.getRow() * LINE_HEIGHT;
 
     setcolor(BLACK);
     line(x, y, x, y + textheight((char*)"A"));
@@ -101,7 +97,6 @@ void RenderWindow::drawCursor(const TextEditor& editor)
 
 void RenderWindow::render(const TextEditor& editor)
 {
-	setbkcolor(WHITE);
 	cleardevice();
 
 	drawEditor(editor);
@@ -120,8 +115,8 @@ void RenderWindow::update(const TextEditor& editor)
 
     bool dirty = false;
 
-    if (w != lastWidth || h != lastHeight) { dirty = true; }
-    if (cursor.getRow() != lastRow || cursor.getCol() != lastCol) { dirty = true; }
+    if (w != m_lastWidth || h != m_lastHeight) { dirty = true; }
+    if (cursor.getRow() != m_lastRow || cursor.getCol() != m_lastCol) { dirty = true; }
 
     std::vector<std::string> currentLines;
     for (int i = 0; i < doc.getLines(); i++)
@@ -129,16 +124,16 @@ void RenderWindow::update(const TextEditor& editor)
         currentLines.push_back(doc.getLine(i));
     }
 
-    if (currentLines != lastLines) { dirty = true; }
+    if (currentLines != m_lastLines) { dirty = true; }
     if (!dirty) { return; }
 
     render(editor);
 
-    lastWidth = w;
-    lastHeight = h;
+    m_lastWidth = w;
+    m_lastHeight = h;
 
-    lastRow = cursor.getRow();
-    lastCol = cursor.getCol();
+    m_lastRow = cursor.getRow();
+    m_lastCol = cursor.getCol();
 
-    lastLines = std::move(currentLines);
+    m_lastLines = std::move(currentLines);
 }

@@ -5,7 +5,7 @@
 class TextDocument
 {
 private:
-	std::vector<std::string> lines = { "" };
+	std::vector<std::string> m_lines = { "" };
 
 public:
 	TextDocument() = default;
