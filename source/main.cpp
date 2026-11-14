@@ -1,30 +1,22 @@
-#include "RenderWindow.h"
-#include "TextEditor.h"
+#include "AppStyle.h"
 #include "InputManager.h"
 #include "LanguageManager.h"
-
-#include <iostream>
+#include "RenderWindow.h"
+#include "TextEditor.h"
+#include <graphics.h>
+#include <windows.h>
 
 int main()
 {
-    RenderWindow window(1920, 1080);
+    LanguageManager language("config.txt");
     TextEditor editor;
     InputManager input;
-    LanguageManager language("config.txt");
+    RenderWindow window(AppStyle::InitialWidth, AppStyle::InitialHeight);
 
-    window.render(editor);
-
-    while (true)
+    while (!(GetAsyncKeyState(VK_ESCAPE) & 1))
     {
-        input.update(editor);
-        window.update(editor);
-
-        if (GetAsyncKeyState(VK_ESCAPE) & 1) break;
-
-        delay(16);
+        input.update(editor, window, language);
+        window.update(editor, language);
+        delay(AppStyle::FrameDelayMs);
     }
-
-    closegraph();
-
-    return 0;
 }

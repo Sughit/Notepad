@@ -1,26 +1,27 @@
 #pragma once
-
-#include <iostream>
-#include <fstream>
+#include <string>
 #include <vector>
 
 class LanguageManager
 {
 private:
-	std::vector<char*> m_languages;
-	std::vector<std::vector<char*>> m_labels;
+    struct Language
+    {
+        std::string name;
+        std::vector<std::string> labels;
+    };
 
-	int m_activeLanguage = 0;
+    std::vector<Language> m_languages;
+    int m_activeIndex = 0;
 
 public:
-	LanguageManager(const std::string& fileName);
-	~LanguageManager();
-	
-	void clearConfiguration();
-	void loadConfiguration(const std::string& fileName);
+    explicit LanguageManager(const std::string& configPath);
 
-	int getActiveLanguage() const;
-	char* getLabel(int language, int label) const;
+    bool load(const std::string& configPath);
+    int count() const;
+    int activeIndex() const;
+    bool select(int index);
 
-	void changeLanguage(int language);
+    const std::string& languageName(int index) const;
+    const std::string& label(int index) const;
 };

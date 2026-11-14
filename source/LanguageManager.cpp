@@ -1,109 +1,97 @@
-
 #include "LanguageManager.h"
+#include <fstream>
 #include <sstream>
-#include <cstring>
+#include <utility>
+#include <iostream>
 
-LanguageManager::LanguageManager(const std::string& fileName)
+namespace
 {
-    loadConfiguration(fileName);
+    const std::vector<std::string> DefaultLabels = {"File", "Edit", "View"};
 }
 
-LanguageManager::~LanguageManager()
+LanguageManager::LanguageManager(const std::string& configPath)
 {
-    clearConfiguration();
+    load(configPath);
 }
 
-void LanguageManager::clearConfiguration()
+bool LanguageManager::load(const std::string& configPath)
 {
-    for (char* language : m_languages)
-        delete[] language;
-
-    for (auto& labels : m_labels)
-        for (char* label : labels)
-            delete[] label;
-
     m_languages.clear();
-    m_labels.clear();
-}
-
-void LanguageManager::loadConfiguration(const std::string& fileName)
-{
-    std::ifstream fin(fileName);
-
-    if (!fin)
-    {
-        std::cerr << "Nu putem gasi fisierul: " << fileName << "\n";
-        return;
-    }
-
-    clearConfiguration();
-
+    std::ifstream file(configPath);
+    std::vector<Language> parsed;
     std::string line;
-    size_t lineNumber = 0;
 
-    while (std::getline(fin, line))
+    if (!file)
     {
-        lineNumber++;
+        std::cerr << "Eroare la incarcarea fisierului: " << configPath << "\n";
+        return false;
+    }
 
+    while (std::getline(file, line))
+    {
         std::istringstream input(line);
-        std::string type;
+        std::string first;
+        if (!(input >> first) || first.front() == '#')
+            continue;
 
-        if (!(input >> type)) continue;
-        if (type[0] == '#') continue;
-
-        if (type == "Language")
+        if (first == "Language")
         {
-            std::string language;
-
-            if (!(input >> language))
-            {
-                std::cerr << "Eroare la linia: " << lineNumber << "\n";
-                continue;
-            }
-
-            char* text = new char[language.size() + 1];
-            strcpy_s(text, language.size() + 1, language.c_str());
-
-            m_languages.push_back(text);
-            m_labels.emplace_back();
+            std::string name;
+            std::getline(input >> std::ws, name);
+            if (!name.empty())
+                parsed.push_back({ name, {} });
         }
-        else
+        else if (!parsed.empty())
         {
-            if (m_labels.empty())
+            parsed.back().labels.push_back(first);
+            std::string word;
+            while (input >> word)
             {
-                std::cerr << "Nu exista o limba definita\n";
-                continue;
+                parsed.back().labels.push_back(word);
             }
-
-            do
-            {
-                char* text = new char[type.size() + 1];
-                strcpy_s(text, type.size() + 1, type.c_str());
-
-                m_labels.back().push_back(text);
-
-            } while (input >> type);
         }
     }
-}
 
-int LanguageManager::getActiveLanguage() const
-{
-    return m_activeLanguage;
-}
-
-char* LanguageManager::getLabel(int language, int label) const
-{
-    return m_labels.at(language).at(label);
-}
-
-void LanguageManager::changeLanguage(int language)
-{
-    if (language < 0 || language >= m_languages.size())
+    for (auto& language : parsed)
     {
-        std::cerr << "Indice de limbaj invalid\n";
-        return;
+        if (language.labels.size() >= DefaultLabels.size())
+        {
+            m_languages.push_back(std::move(language));
+        }
+    }
+    if (m_languages.empty())
+    {
+        m_languages.push_back({"English", DefaultLabels});
     }
 
-    m_activeLanguage = language;
+    m_activeIndex = 0;
+    return file.is_open() && !parsed.empty();
+}
+
+int LanguageManager::count() const
+{
+    return static_cast<int>(m_languages.size());
+}
+
+int LanguageManager::activeIndex() const
+{
+    return m_activeIndex;
+}
+
+bool LanguageManager::select(int index)
+{
+    if (index < 0 || index >= count()) { return false; }
+    m_activeIndex = index;
+
+    return true;
+}
+
+const std::string& LanguageManager::languageName(int index) const
+{
+    return m_languages.at(index).name;
+}
+
+const std::string& LanguageManager::label(int index) const
+{
+    return m_languages.at(m_activeIndex).labels.at(index);
 }

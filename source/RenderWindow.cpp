@@ -1,139 +1,110 @@
 #include "RenderWindow.h"
+#include "AppStyle.h"
+#include "LanguageManager.h"
+#include "TextEditor.h"
+#include <graphics.h>
+#include <stdexcept>
+#include <utility>
 
-void RenderWindow::init(int w, int h)
+RenderWindow::RenderWindow(int width, int height)
 {
-    initwindow(w, h, "Notepad", 0, 0, false);
+    initwindow(width, height, "Notepad", 0, 0, false);
+    m_window = FindWindowA(nullptr, "Notepad");
+    if (!m_window) { throw std::runtime_error("Could not find Notepad window"); }
 
-    HWND hwnd = FindWindowA(NULL, "Notepad");
+    LONG_PTR style = GetWindowLongPtr(m_window, GWL_STYLE);
+    SetWindowLongPtr(m_window, GWL_STYLE, style | WS_THICKFRAME | WS_MAXIMIZEBOX);
+    SetWindowPos(m_window, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
-    if (hwnd == NULL)
-    {
-        MessageBoxA(NULL, "Window not found!", "Error", MB_OK);
-        return;
-    }
-
-    LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
-
-    style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
-
-    SetWindowLongPtr(hwnd, GWL_STYLE, style);
-
-    SetWindowPos(
-        hwnd, NULL,
-        0, 0, 0, 0,
-        SWP_NOMOVE |
-        SWP_NOSIZE |
-        SWP_NOZORDER |
-        SWP_FRAMECHANGED
-    );
-
-    m_lastWidth = getmaxx();
-    m_lastHeight = getmaxy();
+    m_text = std::make_unique<TextRenderer>(m_window);
 }
 
-void RenderWindow::drawMenu()
+RenderWindow::~RenderWindow()
 {
-	setfillstyle(SOLID_FILL, LIGHTGRAY);
-	bar(0, 0, getmaxx(), MENU_HEIGHT);
-
-	setbkcolor(LIGHTGRAY);
-	setcolor(BLACK);
-	settextstyle(DEFAULT_FONT, HORIZ_DIR, 1);
-
-	outtextxy(15, 10, (char*)"File");
-	outtextxy(70, 10, (char*)"Edit");
-	outtextxy(125, 10, (char*)"View");
-
-	setcolor(DARKGRAY);
-	line(0, MENU_HEIGHT, getmaxx(), MENU_HEIGHT);
+    m_text.reset();
+    closegraph();
 }
 
 void RenderWindow::drawEditor(const TextEditor& editor)
 {
-    const TextDocument& doc = editor.getDocument();
+    const auto& doc = editor.getDocument();
+    RECT client = {};
+    GetClientRect(m_window, &client);
 
-    const int PADDING_X = 10;
-    const int PADDING_Y = 10;
-    const int LINE_HEIGHT = 20;
-
-    setfillstyle(SOLID_FILL, WHITE);
-    bar(0, MENU_HEIGHT + 1, getmaxx(), getmaxy());
-
-    setbkcolor(WHITE);
-    setcolor(BLACK);
-    settextstyle(DEFAULT_FONT, HORIZ_DIR, 1);
-
-    for (int i = 0; i < doc.getLines(); i++)
+    for (int row = 0; row < doc.getLines(); row++)
     {
-        int x = PADDING_X;
-        int y = MENU_HEIGHT + PADDING_Y + i * LINE_HEIGHT;
+        const int y = AppStyle::MenuHeight + AppStyle::EditorPaddingY + row * AppStyle::EditorLineHeight;
+        if (y >= client.bottom) { break; }
 
-        if (y + LINE_HEIGHT > getmaxy()) { break; }
+        m_text->draw(AppStyle::EditorPaddingX, y, doc.getLine(row));
+    }
 
-        std::string line = doc.getLine(i);
-
-        outtextxy(x, y, const_cast<char*>(line.c_str()));
+    const auto& cursor = editor.getCursor();
+    const auto cursorPoint = m_layout.toScreen(doc, { cursor.getRow(), cursor.getCol() }, *m_text);
+    if (cursorPoint.y < client.bottom)
+    {
+        m_text->drawCursor(cursorPoint.x, cursorPoint.y);
     }
 }
 
-void RenderWindow::drawCursor(const TextEditor& editor)
+void RenderWindow::render(const TextEditor& editor, const LanguageManager& language)
 {
-    const TextCursor& cursor = editor.getCursor();
-    const TextDocument& doc = editor.getDocument();
+    m_text->begin();
+    RECT client = {};
+    GetClientRect(m_window, &client);
+    m_text->fillRect(0, 0, client.right, client.bottom, AppStyle::EditorBackground);
 
-    const int PADDING_X = 10;
-    const int PADDING_Y = 10;
-    const int LINE_HEIGHT = 20;
-
-    std::string beforeCursor = doc.getLine(cursor.getRow()).substr(0, cursor.getCol());
-
-    int x = PADDING_X + textwidth(const_cast<char*>(beforeCursor.c_str()));
-
-    int y = MENU_HEIGHT + PADDING_Y + cursor.getRow() * LINE_HEIGHT;
-
-    setcolor(BLACK);
-    line(x, y, x, y + textheight((char*)"A"));
+    m_menu.refresh(language, *m_text);
+    drawEditor(editor);
+    m_menu.drawBackground(client.right, *m_text);
+    m_menu.drawText(*m_text);
+    m_text->end();  
 }
 
-void RenderWindow::render(const TextEditor& editor)
+void RenderWindow::update(const TextEditor& editor, const LanguageManager& language)
 {
-	cleardevice();
+    RECT client = {};
+    GetClientRect(m_window, &client);
+    const int width = client.right - client.left;
+    const int height = client.bottom - client.top;
+    const auto& cursor = editor.getCursor();
+    const auto& doc = editor.getDocument();
 
-	drawEditor(editor);
-    drawCursor(editor);
-	drawMenu();
-}
-
-
-void RenderWindow::update(const TextEditor& editor)
-{
-    int w = getmaxx();
-    int h = getmaxy();
-
-    const TextDocument& doc = editor.getDocument();
-    const TextCursor& cursor = editor.getCursor();
-
-    bool dirty = false;
-
-    if (w != m_lastWidth || h != m_lastHeight) { dirty = true; }
-    if (cursor.getRow() != m_lastRow || cursor.getCol() != m_lastCol) { dirty = true; }
-
-    std::vector<std::string> currentLines;
-    for (int i = 0; i < doc.getLines(); i++)
+    std::vector<std::string> lines;
+    lines.reserve(doc.getLines());
+    for (int row = 0; row < doc.getLines(); row++)
     {
-        currentLines.push_back(doc.getLine(i));
+        lines.push_back(doc.getLine(row));
     }
 
-    if (currentLines != m_lastLines) { dirty = true; }
-    if (!dirty) { return; }
+    if (m_needsRedraw || width != m_previousWidth || height != m_previousHeight || language.activeIndex() != m_previousLanguage ||
+        cursor.getRow() != m_previousRow || cursor.getCol() != m_previousCol || lines != m_previousLines)
+    {
+        render(editor, language);
+        m_needsRedraw = false;
+        m_previousWidth = width;
+        m_previousHeight = height;
+        m_previousLanguage = language.activeIndex();
+        m_previousRow = cursor.getRow();
+        m_previousCol = cursor.getCol();
+        m_previousLines = std::move(lines);
+    }
+}
 
-    render(editor);
+bool RenderWindow::menuClick(Point point, LanguageManager& language)
+{
+    m_text->begin(false);
+    const auto result = m_menu.click(point, language, *m_text);
+    m_text->end();
+    
+    m_needsRedraw = true;
+    return result == MenuBar::ClickResult::Consumed;
+}
 
-    m_lastWidth = w;
-    m_lastHeight = h;
-
-    m_lastRow = cursor.getRow();
-    m_lastCol = cursor.getCol();
-
-    m_lastLines = std::move(currentLines);
+DocumentPosition RenderWindow::documentPosition(Point point, const TextDocument& document)
+{
+    m_text->begin(false);
+    const auto position = m_layout.fromScreen(document, point, *m_text);
+    m_text->end();
+    return position;
 }

@@ -1,40 +1,71 @@
 #include "InputManager.h"
-#include "graphics.h"
+#include "AppStyle.h"
+#include "LanguageManager.h"
+#include "RenderWindow.h"
+#include "TextEditor.h"
+#include <graphics.h>
+#include <windows.h>
 
-void InputManager::update(TextEditor& editor)
+namespace
 {
-	if (!kbhit()) { return; }
+    constexpr int DeleteKeyScanCode = 83; // Codul de la Windows pentru delete
+}
 
-	ch = getch();
+void InputManager::update(TextEditor& editor, RenderWindow& window, LanguageManager& language)
+{
+    handleMouse(editor, window, language);
+    handleKeyboard(editor);
+}
 
-	if (ch == 0 || ch == 224) // TASTE SPECIALE
-	{
-		int special = getch();
+void InputManager::handleMouse(TextEditor& editor, RenderWindow& window, LanguageManager& language)
+{
+    while (ismouseclick(WM_LBUTTONDOWN))
+    {
+        int x = 0;
+        int y = 0;
+        getmouseclick(WM_LBUTTONDOWN, x, y);
+        const Point click = {x, y};
 
-		if (special == KEY_UP) editor.moveUp();
-		if (special == KEY_DOWN) editor.moveDown();
-		if (special == KEY_LEFT) editor.moveLeft();
-		if (special == KEY_RIGHT) editor.moveRight();
-		if (special == KEY_HOME) editor.moveHome();
-		if (special == KEY_END) editor.moveEnd();
-	}
-	else if (ch >= 32 && ch <= 126)
-	{
-		editor.insertChar((char)ch);
-	}
-	else if (ch == VK_BACK) // BACKSPACE
-	{
-		editor.backspace();
-	}
-	else if (ch == VK_TAB) // TAB
-	{
-		editor.insertChar(' ');
-		editor.insertChar(' ');
-		editor.insertChar(' ');
-		editor.insertChar(' ');
-	}
-	else if (ch == VK_RETURN) // ENTER
-	{
-		editor.enter();
-	}
+        if (window.menuClick(click, language)) { continue; }
+        if (y < AppStyle::MenuHeight || x < 0) { continue; }
+
+        const auto position = window.documentPosition(click, editor.getDocument());
+        editor.getCursor().setPosition(position.row, position.col);
+    }
+}
+
+void InputManager::handleKeyboard(TextEditor& editor)
+{
+    if (!kbhit()) { return; }
+
+    const int key = getch();
+    if (key == 0 || key == 224) // Cod special
+    {
+        const int special = getch();
+        switch (special)
+        {
+        case KEY_UP:    editor.moveUp();    break;
+        case KEY_DOWN:  editor.moveDown();  break;
+        case KEY_LEFT:  editor.moveLeft();  break;
+        case KEY_RIGHT: editor.moveRight(); break;
+        case KEY_HOME:  editor.moveHome();  break;
+        case KEY_END:   editor.moveEnd();   break;
+        case DeleteKeyScanCode:    editor.deleteChar();break;
+        }
+        return;
+    }
+
+    switch (key)
+    {
+    case VK_BACK:   editor.backspace(); break;
+    case VK_RETURN: editor.enter();     break;
+    case VK_TAB:
+        for (int count = 0; count < AppStyle::TabSpaces; count++)
+            editor.insertChar(' ');
+        break;
+    default:
+        if (key >= ' ' && key <= '~')
+            editor.insertChar(static_cast<char>(key));
+        break;
+    }
 }

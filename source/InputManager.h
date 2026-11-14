@@ -1,12 +1,15 @@
 #pragma once
 
-#include "TextEditor.h" 
+class TextEditor;
+class RenderWindow;
+class LanguageManager;
 
 class InputManager
 {
 private:
-	int ch = 0;
+    void handleKeyboard(TextEditor& editor);
+    void handleMouse(TextEditor& editor, RenderWindow& window, LanguageManager& language);
 
 public:
-	void update(TextEditor& editor);
+    void update(TextEditor& editor, RenderWindow& window, LanguageManager& language);
 };

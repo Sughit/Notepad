@@ -1,33 +1,41 @@
 #pragma once
-
-#include <graphics.h>
-#include <windows.h>
-#include <vector>
+#include "EditorLayout.h"
+#include "MenuBar.h"
+#include "TextRenderer.h"
+#include <memory>
 #include <string>
-#include "TextEditor.h"
+#include <vector>
 
-const int MENU_HEIGHT = 30;
+class LanguageManager;
+class TextEditor;
 
 class RenderWindow
 {
 private:
-	int m_lastWidth = -1;
-	int m_lastHeight = -1;
+    void drawEditor(const TextEditor& editor);
 
-	int m_lastRow = -1;
-	int m_lastCol = -1;
+    HWND m_window = nullptr;
+    std::unique_ptr<TextRenderer> m_text;
+    MenuBar m_menu;
+    EditorLayout m_layout;
 
-	std::vector<std::string> m_lastLines;
-
-	void init(int w, int h);
-
-	void drawMenu();
-	void drawEditor(const TextEditor& editor);
-	void drawCursor(const TextEditor& editor);
+    bool m_needsRedraw = true;
+    int m_previousWidth = -1;
+    int m_previousHeight = -1;
+    int m_previousLanguage = -1;
+    int m_previousRow = -1;
+    int m_previousCol = -1;
+    std::vector<std::string> m_previousLines;
 
 public:
-	RenderWindow(int w, int h) { init(w, h); }
+    RenderWindow(int width, int height);
+    ~RenderWindow();
 
-	void render(const TextEditor& editor);
-	void update(const TextEditor& editor);
+    RenderWindow(const RenderWindow&) = delete;
+    RenderWindow& operator=(const RenderWindow&) = delete;
+
+    void render(const TextEditor& editor, const LanguageManager& language);
+    void update(const TextEditor& editor, const LanguageManager& language);
+    bool menuClick(Point point, LanguageManager& language);
+    DocumentPosition documentPosition(Point point, const TextDocument& document);
 };
